@@ -9,6 +9,8 @@ output/*
 !output/.gitkeep
 !output/screening_result.csv
 !output/screening_result.xlsx
+!output/strict_candidates.xlsx
+!output/watchlist_candidates.xlsx
 logs/*
 !logs/.gitkeep
 !logs/error_log.csv

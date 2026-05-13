@@ -73,6 +73,8 @@ symbol,name,market
 
 - [output/screening_result.csv](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/output/screening_result.csv)
 - [output/screening_result.xlsx](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/output/screening_result.xlsx)
+- [output/strict_candidates.xlsx](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/output/strict_candidates.xlsx)
+- [output/watchlist_candidates.xlsx](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/output/watchlist_candidates.xlsx)
 - [logs/error_log.csv](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/logs/error_log.csv)
 
 單一股票抓不到股價資料時會略過並寫入錯誤紀錄。法人資料抓取失敗時，仍會輸出技術面篩選結果，法人欄位補 0。
@@ -85,15 +87,31 @@ symbol,name,market
 - 收盤價、MA20、是否站上 MA20
 - K 值、D 值、RSI
 - Volume_MA5、Volume_MA20、Volume_MA40、放量倍數
+- MACD_DIF、MACD_Signal、MACD_Histogram、前 1 日 / 前 2 日 Histogram
+- MACD_綠柱趨緩接近翻紅，僅做參考標註，不作為硬性篩選條件
+- candidate_level、candidate_score，以及 KD / RSI / 放量 / 法人買超檢查欄位
 - 外資、投信、自營商、三大法人近 1 日 / 5 日 / 20 日買賣超張數
 - 最後更新日期
 
 排序邏輯：
 
-1. 放量倍數由高到低
-2. 三大法人近 5 日合計買賣超張數由高到低
-3. 投信近 5 日買賣超張數由高到低
-4. RSI 由低到高
+1. candidate_score 由高到低
+2. 放量倍數由高到低
+3. 三大法人近 5 日合計買賣超張數由高到低
+4. 投信近 5 日買賣超張數由高到低
+5. RSI 由低到高
+
+## 候選名單邏輯
+
+`candidate_level = 符合` 代表完全符合嚴格條件：收盤價低於 300、KD 介於 30 到 50、K > D、RSI 介於 30 到 50、Volume_MA5 同時大於 Volume_MA20 的 1.5 倍與 Volume_MA40 的 1.3 倍。
+
+`candidate_level = 接近` 代表符合多數觀察條件：價格、較寬的 KD / RSI 區間、較低的放量門檻、MACD 綠柱縮短接近翻紅、或法人 / 投信近 5 日買超。門檻可在 `config.py` 的 `watch_*` 參數調整。
+
+`candidate_score` 滿分 100 分：KD 20、RSI 20、Volume_MA5 / Volume_MA20 20、Volume_MA5 / Volume_MA40 10、MACD 10、三大法人近 5 日買超 10、投信近 5 日買超 10。
+
+## 股票清單更新
+
+預設 `auto_refresh_stock_list = True`，執行時會優先從 TWSE OpenAPI 更新上市與上櫃公司基本資料，並覆寫 `data/stock_list.csv`。若官方資料抓取失敗，會退回使用本機 CSV。
 
 ## 可能限制
 

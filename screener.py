@@ -14,6 +14,8 @@ from config import CONFIG
 
 
 OUTPUT_COLUMNS = [
+    "candidate_level",
+    "candidate_score",
     "股票代號",
     "股票名稱",
     "市場",
@@ -27,6 +29,18 @@ OUTPUT_COLUMNS = [
     "Volume_MA20",
     "Volume_MA40",
     "放量倍數",
+    "MACD_DIF",
+    "MACD_Signal",
+    "MACD_Histogram",
+    "MACD_Histogram_前1日",
+    "MACD_Histogram_前2日",
+    "MACD_綠柱趨緩接近翻紅",
+    "是否符合 KD 區間",
+    "是否符合 RSI 區間",
+    "是否明顯放量",
+    "MACD 是否綠柱趨緩接近翻紅",
+    "法人近 5 日是否合計買超",
+    "投信近 5 日是否買超",
     "外資近 1 日買賣超張數",
     "投信近 1 日買賣超張數",
     "自營商近 1 日買賣超張數",
@@ -70,12 +84,71 @@ def add_error(errors: list[dict[str, str]], symbol: str, stage: str, reason: str
     )
 
 
+def fetch_official_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    endpoints = [
+        ("上市", "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"),
+        ("上櫃", "https://openapi.twse.com.tw/v1/opendata/t187ap03_O"),
+    ]
+    frames = []
+    headers = {"User-Agent": "CandyTWStock/1.0"}
+
+    for market, url in endpoints:
+        response = requests.get(url, timeout=config["request_timeout_seconds"], headers=headers)
+        response.raise_for_status()
+        rows = response.json()
+        raw = pd.DataFrame(rows)
+        if raw.empty:
+            continue
+
+        code_col = next((col for col in ["公司代號", "股票代號", "證券代號", "Code"] if col in raw.columns), None)
+        name_col = next((col for col in ["公司簡稱", "公司名稱", "股票名稱", "Name"] if col in raw.columns), None)
+        if not code_col or not name_col:
+            raise ValueError(f"{market} 股票清單欄位無法辨識")
+
+        frame = pd.DataFrame(
+            {
+                "symbol": raw[code_col].astype(str).str.strip(),
+                "name": raw[name_col].astype(str).str.strip(),
+                "market": market,
+            }
+        )
+        frames.append(frame)
+
+    if not frames:
+        raise ValueError("官方股票清單沒有資料")
+
+    stocks = pd.concat(frames, ignore_index=True)
+    stocks = stocks[stocks["symbol"].str.fullmatch(r"\d{4}", na=False)].copy()
+    stocks = stocks.drop_duplicates(subset=["symbol", "market"]).reset_index(drop=True)
+    return stocks
+
+
+def read_csv_with_fallback(path: Path) -> pd.DataFrame:
+    try:
+        return pd.read_csv(path, dtype={"symbol": str})
+    except UnicodeDecodeError:
+        return pd.read_csv(path, dtype={"symbol": str}, encoding="utf-8-sig")
+
+
 def load_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
     path = Path(config["stock_list_path"])
-    if not path.exists():
-        raise FileNotFoundError(f"找不到股票清單: {path}")
+    errors: list[str] = []
 
-    stocks = pd.read_csv(path, dtype={"symbol": str})
+    if config.get("auto_refresh_stock_list", False):
+        try:
+            stocks = fetch_official_stock_list(config)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            stocks.to_csv(path, index=False, encoding="utf-8-sig")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"官方股票清單抓取失敗，改用本機 CSV: {exc}")
+            if not path.exists():
+                raise FileNotFoundError(f"找不到股票清單: {path}") from exc
+            stocks = read_csv_with_fallback(path)
+    else:
+        if not path.exists():
+            raise FileNotFoundError(f"找不到股票清單: {path}")
+        stocks = read_csv_with_fallback(path)
+
     required = {"symbol", "name", "market"}
     missing = required - set(stocks.columns)
     if missing:
@@ -94,6 +167,12 @@ def load_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
         stocks = stocks[~stocks["name"].str.contains("特別|甲特|乙特|丙特", regex=True)]
     if config.get("exclude_ky", False):
         stocks = stocks[~stocks["name"].str.contains("KY", case=False, regex=False)]
+
+    if config.get("max_stocks"):
+        stocks = stocks.head(int(config["max_stocks"]))
+
+    if errors:
+        print("\n".join(errors))
 
     return stocks.reset_index(drop=True)
 
@@ -156,7 +235,49 @@ def calculate_indicators(price_data: pd.DataFrame, config: dict[str, Any] = CONF
     df["Volume_MA20"] = df["Volume"].rolling(config["volume_mid_window"]).mean()
     df["Volume_MA40"] = df["Volume"].rolling(config["volume_long_window"]).mean()
 
+    df["MACD_DIF"] = (
+        df["Close"].ewm(span=config["macd_fast_period"], adjust=False).mean()
+        - df["Close"].ewm(span=config["macd_slow_period"], adjust=False).mean()
+    )
+    df["MACD_Signal"] = df["MACD_DIF"].ewm(span=config["macd_signal_period"], adjust=False).mean()
+    df["MACD_Histogram"] = df["MACD_DIF"] - df["MACD_Signal"]
+
     return df
+
+
+def is_macd_green_bar_shrinking(indicators: pd.DataFrame, config: dict[str, Any] = CONFIG) -> bool:
+    if len(indicators) < 3:
+        return False
+
+    h2 = indicators["MACD_Histogram"].iloc[-3]
+    h1 = indicators["MACD_Histogram"].iloc[-2]
+    h0 = indicators["MACD_Histogram"].iloc[-1]
+    if pd.isna(h2) or pd.isna(h1) or pd.isna(h0):
+        return False
+
+    return bool(
+        h0 < 0
+        and h2 < h1 < h0
+        and abs(h0) < abs(h1)
+        and h0 > config["macd_near_zero_threshold"]
+    )
+
+
+def evaluate_strict_flags(row: pd.Series, config: dict[str, Any] = CONFIG) -> dict[str, bool]:
+    kd_ok = config["kd_min"] <= row["K 值"] <= config["kd_max"] and config["kd_min"] <= row["D 值"] <= config["kd_max"]
+    rsi_ok = config["rsi_min"] <= row["RSI"] <= config["rsi_max"]
+    volume_mid_ok = row["Volume_MA5"] > row["Volume_MA20"] * config["volume_mid_multiplier"]
+    volume_long_ok = row["Volume_MA5"] > row["Volume_MA40"] * config["volume_long_multiplier"]
+    return {
+        "price_ok": row["收盤價"] < config["price_limit"],
+        "kd_ok": bool(kd_ok),
+        "rsi_ok": bool(rsi_ok),
+        "volume_mid_ok": bool(volume_mid_ok),
+        "volume_long_ok": bool(volume_long_ok),
+        "volume_ok": bool(volume_mid_ok and volume_long_ok),
+        "k_above_d_ok": bool(row["K 值"] > row["D 值"]),
+        "close_above_ma_ok": bool(row["收盤價"] > row["MA20"]),
+    }
 
 
 def apply_filters(indicators: pd.DataFrame, config: dict[str, Any] = CONFIG) -> bool:
@@ -180,7 +301,10 @@ def apply_filters(indicators: pd.DataFrame, config: dict[str, Any] = CONFIG) -> 
 
 def build_technical_row(stock: pd.Series, indicators: pd.DataFrame) -> dict[str, Any]:
     latest = indicators.iloc[-1]
+    prev1 = indicators.iloc[-2]
+    prev2 = indicators.iloc[-3]
     volume_ratio = latest["Volume_MA5"] / latest["Volume_MA20"]
+    macd_mark = is_macd_green_bar_shrinking(indicators)
     return {
         "股票代號": stock["symbol"],
         "股票名稱": stock["name"],
@@ -195,6 +319,13 @@ def build_technical_row(stock: pd.Series, indicators: pd.DataFrame) -> dict[str,
         "Volume_MA20": latest["Volume_MA20"],
         "Volume_MA40": latest["Volume_MA40"],
         "放量倍數": volume_ratio,
+        "MACD_DIF": latest["MACD_DIF"],
+        "MACD_Signal": latest["MACD_Signal"],
+        "MACD_Histogram": latest["MACD_Histogram"],
+        "MACD_Histogram_前1日": prev1["MACD_Histogram"],
+        "MACD_Histogram_前2日": prev2["MACD_Histogram"],
+        "MACD_綠柱趨緩接近翻紅": "是" if macd_mark else "否",
+        "MACD 是否綠柱趨緩接近翻紅": "是" if macd_mark else "否",
         "最後更新日期": indicators.index[-1].strftime("%Y-%m-%d"),
     }
 
@@ -356,6 +487,101 @@ def summarize_institutional_data(institutional_data: pd.DataFrame, symbols: list
     return pd.DataFrame(rows)
 
 
+def yes_no(value: bool) -> str:
+    return "是" if value else "否"
+
+
+def evaluate_watch_flags(row: pd.Series, config: dict[str, Any] = CONFIG) -> dict[str, bool]:
+    return {
+        "price_ok": bool(row["收盤價"] < config["price_limit"]),
+        "kd_watch_ok": bool(
+            config["watch_kd_min"] <= row["K 值"] <= config["watch_kd_max"]
+            and config["watch_kd_min"] <= row["D 值"] <= config["watch_kd_max"]
+        ),
+        "rsi_watch_ok": bool(config["watch_rsi_min"] <= row["RSI"] <= config["watch_rsi_max"]),
+        "volume_mid_watch_ok": bool(row["Volume_MA5"] > row["Volume_MA20"] * config["watch_volume_mid_multiplier"]),
+        "volume_long_watch_ok": bool(row["Volume_MA5"] > row["Volume_MA40"] * config["watch_volume_long_multiplier"]),
+        "macd_watch_ok": bool(row["MACD_綠柱趨緩接近翻紅"] == "是"),
+        "institution_watch_ok": bool(
+            row["三大法人近 5 日合計買賣超張數"] > 0 or row["投信近 5 日買賣超張數"] > 0
+        ),
+    }
+
+
+def calculate_candidate_score(row: pd.Series, config: dict[str, Any] = CONFIG) -> int:
+    strict_flags = evaluate_strict_flags(row, config)
+    score = 0
+    if strict_flags["kd_ok"]:
+        score += 20
+    if strict_flags["rsi_ok"]:
+        score += 20
+    if strict_flags["volume_mid_ok"]:
+        score += 20
+    if strict_flags["volume_long_ok"]:
+        score += 10
+    if row["MACD_綠柱趨緩接近翻紅"] == "是":
+        score += 10
+    if row["三大法人近 5 日合計買賣超張數"] > 0:
+        score += 10
+    if row["投信近 5 日買賣超張數"] > 0:
+        score += 10
+    return score
+
+
+def classify_candidates(merged: pd.DataFrame, config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    if merged.empty:
+        return pd.DataFrame(columns=OUTPUT_COLUMNS)
+
+    rows = []
+    for _, row in merged.iterrows():
+        strict_flags = evaluate_strict_flags(row, config)
+        watch_flags = evaluate_watch_flags(row, config)
+
+        strict_ok = all(
+            [
+                strict_flags["price_ok"],
+                strict_flags["kd_ok"],
+                strict_flags["k_above_d_ok"],
+                strict_flags["rsi_ok"],
+                strict_flags["volume_mid_ok"],
+                strict_flags["volume_long_ok"],
+            ]
+        )
+        if config["require_close_above_ma20"]:
+            strict_ok = strict_ok and strict_flags["close_above_ma_ok"]
+
+        watch_count = sum(watch_flags.values())
+        watch_ok = watch_count >= config["watch_min_conditions"]
+
+        if strict_ok:
+            candidate_level = "符合"
+        elif watch_ok:
+            candidate_level = "接近"
+        else:
+            continue
+
+        out = row.to_dict()
+        out["candidate_level"] = candidate_level
+        out["candidate_score"] = calculate_candidate_score(row, config)
+        out["是否符合 KD 區間"] = yes_no(strict_flags["kd_ok"])
+        out["是否符合 RSI 區間"] = yes_no(strict_flags["rsi_ok"])
+        out["是否明顯放量"] = yes_no(strict_flags["volume_ok"])
+        out["法人近 5 日是否合計買超"] = yes_no(row["三大法人近 5 日合計買賣超張數"] > 0)
+        out["投信近 5 日是否買超"] = yes_no(row["投信近 5 日買賣超張數"] > 0)
+        rows.append(out)
+
+    result = pd.DataFrame(rows)
+    if result.empty:
+        return pd.DataFrame(columns=OUTPUT_COLUMNS)
+
+    result = result[OUTPUT_COLUMNS]
+    result = result.sort_values(
+        by=["candidate_score", "放量倍數", "三大法人近 5 日合計買賣超張數", "投信近 5 日買賣超張數", "RSI"],
+        ascending=[False, False, False, False, True],
+    )
+    return result.reset_index(drop=True)
+
+
 def merge_result(technical_result: pd.DataFrame, institutional_summary: pd.DataFrame) -> pd.DataFrame:
     if technical_result.empty:
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
@@ -366,22 +592,21 @@ def merge_result(technical_result: pd.DataFrame, institutional_summary: pd.DataF
             merged[column] = 0
         merged[column] = merged[column].fillna(0)
 
-    merged = merged[OUTPUT_COLUMNS]
-    merged = merged.sort_values(
-        by=["放量倍數", "三大法人近 5 日合計買賣超張數", "投信近 5 日買賣超張數", "RSI"],
-        ascending=[False, False, False, True],
-    )
-    return merged.reset_index(drop=True)
+    return classify_candidates(merged)
 
 
 def export_result(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
     csv_path = Path(config["output_csv_path"])
     excel_path = Path(config["output_excel_path"])
+    strict_path = Path(config["strict_output_excel_path"])
+    watchlist_path = Path(config["watchlist_output_excel_path"])
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     excel_path.parent.mkdir(parents=True, exist_ok=True)
 
     result.to_csv(csv_path, index=False, encoding="utf-8-sig")
     result.to_excel(excel_path, index=False)
+    result[result["candidate_level"] == "符合"].to_excel(strict_path, index=False)
+    result[result["candidate_level"] == "接近"].to_excel(watchlist_path, index=False)
 
 
 def write_error_log(errors: list[dict[str, str]], config: dict[str, Any] = CONFIG) -> None:
@@ -401,8 +626,7 @@ def run_screener(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
         try:
             price_data = fetch_price_data(symbol, stock["market"], config)
             indicators = calculate_indicators(price_data, config)
-            if apply_filters(indicators, config):
-                technical_rows.append(build_technical_row(stock, indicators))
+            technical_rows.append(build_technical_row(stock, indicators))
         except Exception as exc:  # noqa: BLE001
             add_error(errors, symbol, "technical_screening", exc)
 

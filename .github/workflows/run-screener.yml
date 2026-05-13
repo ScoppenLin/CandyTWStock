@@ -48,6 +48,8 @@ jobs:
               print(f"- Screening rows: {len(result)}")
               print(f"- CSV: `output/screening_result.csv`")
               print(f"- Excel: `output/screening_result.xlsx`")
+              print(f"- Strict candidates: `output/strict_candidates.xlsx`")
+              print(f"- Watchlist candidates: `output/watchlist_candidates.xlsx`")
               if not result.empty:
                   print("")
                   print("### Top rows")
@@ -83,10 +85,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f output/screening_result.csv output/screening_result.xlsx logs/error_log.csv
+          git add -f output/screening_result.csv output/screening_result.xlsx output/strict_candidates.xlsx output/watchlist_candidates.xlsx logs/error_log.csv data/stock_list.csv
           if git diff --cached --quiet; then
             echo "No output changes to commit."
           else
-            git commit -m "Update screening output"
+            git commit -m "Update screening output [skip ci]"
             git push
           fi
