@@ -32,6 +32,7 @@ CONFIG = {
     "exclude_ky": False,
     "auto_refresh_stock_list": True,
     "max_stocks": None,
+    "yfinance_batch_size": 80,
     "stock_list_path": "data/stock_list.csv",
     "output_csv_path": "output/screening_result.csv",
     "output_excel_path": "output/screening_result.xlsx",

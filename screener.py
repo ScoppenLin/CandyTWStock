@@ -262,16 +262,12 @@ def to_yfinance_ticker(symbol: str, market: str) -> str:
     return f"{symbol}{suffix}"
 
 
-def fetch_price_data(symbol: str, market: str, config: dict[str, Any] = CONFIG) -> pd.DataFrame:
-    ticker = to_yfinance_ticker(symbol, market)
-    period = f"{config['price_history_months']}mo"
-    data = yf.download(ticker, period=period, interval="1d", progress=False, auto_adjust=False)
-
+def normalize_price_data(data: pd.DataFrame, config: dict[str, Any] = CONFIG) -> pd.DataFrame:
     if data.empty:
-        raise ValueError(f"yfinance 無資料: {ticker}")
+        raise ValueError("yfinance 無資料")
 
     if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
+        data.columns = data.columns.get_level_values(-1)
 
     data = data.rename(columns=str.title)
     needed = {"Open", "High", "Low", "Close", "Volume"}
@@ -284,6 +280,72 @@ def fetch_price_data(symbol: str, market: str, config: dict[str, Any] = CONFIG) 
         raise ValueError("股價資料筆數不足，無法計算指標")
 
     return data
+
+
+def fetch_price_data(symbol: str, market: str, config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    ticker = to_yfinance_ticker(symbol, market)
+    period = f"{config['price_history_months']}mo"
+    data = yf.download(ticker, period=period, interval="1d", progress=False, auto_adjust=False)
+    try:
+        return normalize_price_data(data, config)
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError(f"{exc}: {ticker}") from exc
+
+
+def chunked_dataframe(df: pd.DataFrame, size: int) -> list[pd.DataFrame]:
+    return [df.iloc[start : start + size] for start in range(0, len(df), size)]
+
+
+def extract_ticker_data(batch_data: pd.DataFrame, ticker: str) -> pd.DataFrame:
+    if not isinstance(batch_data.columns, pd.MultiIndex):
+        return batch_data.copy()
+
+    level_0 = batch_data.columns.get_level_values(0)
+    level_1 = batch_data.columns.get_level_values(1)
+    if ticker in level_0:
+        return batch_data[ticker].copy()
+    if ticker in level_1:
+        return batch_data.xs(ticker, axis=1, level=1).copy()
+    return pd.DataFrame()
+
+
+def build_technical_rows(stocks: pd.DataFrame, config: dict[str, Any], errors: list[dict[str, str]]) -> list[dict[str, Any]]:
+    technical_rows = []
+    period = f"{config['price_history_months']}mo"
+    batch_size = int(config["yfinance_batch_size"])
+
+    stocks = stocks.copy()
+    stocks["ticker"] = stocks.apply(lambda row: to_yfinance_ticker(row["symbol"], row["market"]), axis=1)
+
+    for batch in chunked_dataframe(stocks, batch_size):
+        tickers = batch["ticker"].tolist()
+        try:
+            batch_data = yf.download(
+                tickers,
+                period=period,
+                interval="1d",
+                group_by="ticker",
+                progress=False,
+                auto_adjust=False,
+                threads=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            for _, stock in batch.iterrows():
+                add_error(errors, stock["symbol"], "fetch_price_data_batch", exc)
+            continue
+
+        for _, stock in batch.iterrows():
+            try:
+                raw = extract_ticker_data(batch_data, stock["ticker"])
+                price_data = normalize_price_data(raw, config)
+                indicators = calculate_indicators(price_data, config)
+                technical_rows.append(build_technical_row(stock, indicators))
+            except Exception as exc:  # noqa: BLE001
+                add_error(errors, stock["symbol"], "technical_screening", exc)
+
+        time.sleep(config["request_sleep_seconds"])
+
+    return technical_rows
 
 
 def calculate_indicators(price_data: pd.DataFrame, config: dict[str, Any] = CONFIG) -> pd.DataFrame:
@@ -699,18 +761,7 @@ def write_error_log(errors: list[dict[str, str]], config: dict[str, Any] = CONFI
 def run_screener(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
     errors: list[dict[str, str]] = []
     stocks = load_stock_list(config, errors)
-    technical_rows = []
-
-    for _, stock in stocks.iterrows():
-        symbol = stock["symbol"]
-        try:
-            price_data = fetch_price_data(symbol, stock["market"], config)
-            indicators = calculate_indicators(price_data, config)
-            technical_rows.append(build_technical_row(stock, indicators))
-        except Exception as exc:  # noqa: BLE001
-            add_error(errors, symbol, "technical_screening", exc)
-
-        time.sleep(config["request_sleep_seconds"])
+    technical_rows = build_technical_rows(stocks, config, errors)
 
     technical_result = pd.DataFrame(technical_rows)
 
