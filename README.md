@@ -46,6 +46,25 @@ python3 screener.py --require-close-above-ma20
 
 排程預設為台灣時間週一到週五 18:00 自動執行。若第一次使用 GitHub Pages，請到 repo 的 `Settings` -> `Pages`，確認 Build and deployment 的 Source 使用 `GitHub Actions`。
 
+### 每日 Email 通知
+
+GitHub Actions 跑完後會嘗試寄出每日候選清單摘要到：
+
+- `huiju999@yahoo.com.tw`
+- `scoppen.lin@gmail.com`
+
+請到 repo 的 `Settings` -> `Secrets and variables` -> `Actions` -> `New repository secret` 新增以下 secrets：
+
+| Secret | 說明 |
+| --- | --- |
+| `SMTP_HOST` | SMTP 主機，例如 Gmail 使用 `smtp.gmail.com` |
+| `SMTP_PORT` | SMTP 連接埠，通常是 `587`，若使用 SSL 可填 `465` |
+| `SMTP_USERNAME` | 寄件信箱帳號 |
+| `SMTP_PASSWORD` | SMTP 密碼或應用程式密碼 |
+| `SMTP_FROM` | 寄件人信箱，通常與 `SMTP_USERNAME` 相同 |
+
+若使用 Gmail 寄信，建議在 Google 帳號啟用兩步驟驗證後建立「應用程式密碼」，再把該密碼填入 `SMTP_PASSWORD`。若 secrets 尚未設定，workflow 仍會正常產生 CSV / Excel / HTML，只會略過寄信。
+
 ## 如何調整參數
 
 所有主要參數集中在 [config.py](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/config.py) 的 `CONFIG` 區塊，例如：

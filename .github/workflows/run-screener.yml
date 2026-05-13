@@ -127,3 +127,15 @@ jobs:
             git commit -m "Update screening output [skip ci]"
             git push
           fi
+
+      - name: Send email notification
+        if: always()
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          EMAIL_TO: huiju999@yahoo.com.tw,scoppen.lin@gmail.com
+          CANDY_STOCK_SITE_URL: https://scoppenlin.github.io/CandyTWStock/
+        run: python notify_email.py
