@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from io import StringIO
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Any
 import pandas as pd
 import requests
 import yfinance as yf
+from bs4 import BeautifulSoup
 
 from config import CONFIG
 
@@ -85,6 +87,16 @@ def add_error(errors: list[dict[str, str]], symbol: str, stage: str, reason: str
 
 
 def fetch_official_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    try:
+        return fetch_openapi_stock_list(config)
+    except Exception:
+        try:
+            return fetch_mops_csv_stock_list(config)
+        except Exception:
+            return fetch_isin_stock_list(config)
+
+
+def fetch_openapi_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
     endpoints = [
         ("上市", "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"),
         ("上櫃", "https://openapi.twse.com.tw/v1/opendata/t187ap03_O"),
@@ -123,6 +135,77 @@ def fetch_official_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
     return stocks
 
 
+def fetch_mops_csv_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    endpoints = [
+        ("上市", "https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv"),
+        ("上櫃", "https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv"),
+    ]
+    frames = []
+    headers = {"User-Agent": "CandyTWStock/1.0"}
+
+    for market, url in endpoints:
+        response = requests.get(url, timeout=config["request_timeout_seconds"], headers=headers)
+        response.raise_for_status()
+        response.encoding = "utf-8-sig"
+        raw = pd.read_csv(StringIO(response.text), dtype=str)
+        code_col = next((col for col in ["公司代號", "股票代號", "證券代號"] if col in raw.columns), None)
+        name_col = next((col for col in ["公司簡稱", "公司名稱", "股票名稱"] if col in raw.columns), None)
+        if not code_col or not name_col:
+            raise ValueError(f"{market} MOPS CSV 欄位無法辨識")
+        frames.append(
+            pd.DataFrame(
+                {
+                    "symbol": raw[code_col].astype(str).str.strip(),
+                    "name": raw[name_col].astype(str).str.strip(),
+                    "market": market,
+                }
+            )
+        )
+
+    if not frames:
+        raise ValueError("MOPS CSV 股票清單沒有資料")
+
+    stocks = pd.concat(frames, ignore_index=True)
+    stocks = stocks[stocks["symbol"].str.fullmatch(r"\d{4}", na=False)].copy()
+    stocks = stocks.drop_duplicates(subset=["symbol", "market"]).reset_index(drop=True)
+    return stocks
+
+
+def fetch_isin_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    endpoints = [
+        ("上市", "https://isin.twse.com.tw/isin/C_public.jsp?strMode=2"),
+        ("上櫃", "https://isin.twse.com.tw/isin/C_public.jsp?strMode=4"),
+    ]
+    frames = []
+    headers = {"User-Agent": "CandyTWStock/1.0"}
+
+    for market, url in endpoints:
+        response = requests.get(url, timeout=config["request_timeout_seconds"], headers=headers)
+        response.raise_for_status()
+        response.encoding = "big5"
+        soup = BeautifulSoup(response.text, "html.parser")
+        rows = []
+        for tr in soup.find_all("tr"):
+            cells = [td.get_text(" ", strip=True) for td in tr.find_all("td")]
+            if not cells:
+                continue
+            first = cells[0].replace("\u3000", " ").strip()
+            parts = first.split(maxsplit=1)
+            if len(parts) < 2:
+                continue
+            symbol, name = parts[0].strip(), parts[1].strip()
+            if symbol.isdigit() and len(symbol) == 4:
+                rows.append({"symbol": symbol, "name": name, "market": market})
+        frames.append(pd.DataFrame(rows))
+
+    if not frames:
+        raise ValueError("ISIN 股票清單沒有資料")
+
+    stocks = pd.concat(frames, ignore_index=True)
+    stocks = stocks.drop_duplicates(subset=["symbol", "market"]).reset_index(drop=True)
+    return stocks
+
+
 def read_csv_with_fallback(path: Path) -> pd.DataFrame:
     try:
         return pd.read_csv(path, dtype={"symbol": str})
@@ -130,9 +213,9 @@ def read_csv_with_fallback(path: Path) -> pd.DataFrame:
         return pd.read_csv(path, dtype={"symbol": str}, encoding="utf-8-sig")
 
 
-def load_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+def load_stock_list(config: dict[str, Any] = CONFIG, errors: list[dict[str, str]] | None = None) -> pd.DataFrame:
     path = Path(config["stock_list_path"])
-    errors: list[str] = []
+    errors = errors if errors is not None else []
 
     if config.get("auto_refresh_stock_list", False):
         try:
@@ -140,7 +223,7 @@ def load_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
             path.parent.mkdir(parents=True, exist_ok=True)
             stocks.to_csv(path, index=False, encoding="utf-8-sig")
         except Exception as exc:  # noqa: BLE001
-            errors.append(f"官方股票清單抓取失敗，改用本機 CSV: {exc}")
+            add_error(errors, "ALL", "load_stock_list", f"官方股票清單抓取失敗，改用本機 CSV: {exc}")
             if not path.exists():
                 raise FileNotFoundError(f"找不到股票清單: {path}") from exc
             stocks = read_csv_with_fallback(path)
@@ -170,9 +253,6 @@ def load_stock_list(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
 
     if config.get("max_stocks"):
         stocks = stocks.head(int(config["max_stocks"]))
-
-    if errors:
-        print("\n".join(errors))
 
     return stocks.reset_index(drop=True)
 
@@ -618,7 +698,7 @@ def write_error_log(errors: list[dict[str, str]], config: dict[str, Any] = CONFI
 
 def run_screener(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
     errors: list[dict[str, str]] = []
-    stocks = load_stock_list(config)
+    stocks = load_stock_list(config, errors)
     technical_rows = []
 
     for _, stock in stocks.iterrows():
