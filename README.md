@@ -32,6 +32,17 @@ python3 screener.py --stock-list data/stock_list.csv
 python3 screener.py --require-close-above-ma20
 ```
 
+## 在 GitHub Actions 執行
+
+到 GitHub repo 的 `Actions` 頁面，選擇 `Run Taiwan Stock Screener`，按 `Run workflow`。
+
+執行完成後有兩個地方可以看結果：
+
+- Actions run 頁面的 Summary 會顯示篩選筆數與近期錯誤。
+- Repo 內會自動更新 `output/screening_result.csv`、`output/screening_result.xlsx`、`logs/error_log.csv`。
+
+若篩選筆數是 0，代表程式有成功輸出，但目前股票清單與參數沒有股票符合條件；可先放寬 `config.py` 裡的 RSI / KD / 放量倍數條件，或增加 `data/stock_list.csv` 股票清單。
+
 ## 如何調整參數
 
 所有主要參數集中在 [config.py](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/config.py) 的 `CONFIG` 區塊，例如：

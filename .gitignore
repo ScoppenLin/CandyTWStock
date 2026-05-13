@@ -7,5 +7,8 @@ venv/
 
 output/*
 !output/.gitkeep
+!output/screening_result.csv
+!output/screening_result.xlsx
 logs/*
 !logs/.gitkeep
+!logs/error_log.csv

@@ -3,6 +3,9 @@ name: Run Taiwan Stock Screener
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   run-screener:
     runs-on: ubuntu-latest
@@ -24,6 +27,44 @@ jobs:
       - name: Run screener
         run: python screener.py
 
+      - name: Add run summary
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import pandas as pd
+          from pathlib import Path
+
+          result_path = Path("output/screening_result.csv")
+          error_path = Path("logs/error_log.csv")
+
+          print("## Taiwan Stock Screener Output")
+          if result_path.exists():
+              result = pd.read_csv(result_path)
+              print(f"- Screening rows: {len(result)}")
+              print(f"- CSV: `output/screening_result.csv`")
+              print(f"- Excel: `output/screening_result.xlsx`")
+              if not result.empty:
+                  print("")
+                  print("### Top rows")
+                  print("```csv")
+                  print(result.head(10).to_csv(index=False))
+                  print("```")
+              else:
+                  print("")
+                  print("No stock matched the current filters.")
+          else:
+              print("- Screening result was not generated.")
+
+          if error_path.exists():
+              errors = pd.read_csv(error_path)
+              print(f"- Error log rows: {len(errors)}")
+              if not errors.empty:
+                  print("")
+                  print("### Recent errors")
+                  print("```csv")
+                  print(errors.tail(10).to_csv(index=False))
+                  print("```")
+          PY
+
       - name: Upload screening outputs
         uses: actions/upload-artifact@v4
         with:
@@ -31,3 +72,15 @@ jobs:
           path: |
             output/
             logs/
+
+      - name: Commit screening outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f output/screening_result.csv output/screening_result.xlsx logs/error_log.csv
+          if git diff --cached --quiet; then
+            echo "No output changes to commit."
+          else
+            git commit -m "Update screening output"
+            git push
+          fi
