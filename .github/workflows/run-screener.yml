@@ -2,6 +2,9 @@ name: Run Taiwan Stock Screener
 
 on:
   workflow_dispatch:
+  schedule:
+    # Taiwan market closes at 13:30 Asia/Taipei. This runs at 18:00 Taipei time on weekdays.
+    - cron: "0 10 * * 1-5"
   push:
     branches:
       - main
@@ -11,10 +14,19 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   run-screener:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -81,6 +93,28 @@ jobs:
           path: |
             output/
             logs/
+
+      - name: Prepare GitHub Pages site
+        run: |
+          mkdir -p public/downloads
+          cp output/candidates.html public/index.html
+          cp output/screening_result.csv public/downloads/screening_result.csv
+          cp output/screening_result.xlsx public/downloads/screening_result.xlsx
+          cp output/strict_candidates.xlsx public/downloads/strict_candidates.xlsx
+          cp output/watchlist_candidates.xlsx public/downloads/watchlist_candidates.xlsx
+          cp logs/error_log.csv public/downloads/error_log.csv
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       - name: Commit screening outputs
         run: |

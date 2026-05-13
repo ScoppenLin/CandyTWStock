@@ -40,8 +40,11 @@ python3 screener.py --require-close-above-ma20
 
 - Actions run 頁面的 Summary 會顯示篩選筆數與近期錯誤。
 - Repo 內會自動更新 `output/screening_result.csv`、`output/screening_result.xlsx`、`logs/error_log.csv`。
+- GitHub Pages 會自動部署每日 HTML 頁面，網址預設為 `https://scoppenlin.github.io/CandyTWStock/`。
 
 若篩選筆數是 0，代表程式有成功輸出，但目前股票清單與參數沒有股票符合條件；可先放寬 `config.py` 裡的 RSI / KD / 放量倍數條件，或增加 `data/stock_list.csv` 股票清單。
+
+排程預設為台灣時間週一到週五 18:00 自動執行。若第一次使用 GitHub Pages，請到 repo 的 `Settings` -> `Pages`，確認 Build and deployment 的 Source 使用 `GitHub Actions`。
 
 ## 如何調整參數
 
@@ -113,6 +116,8 @@ symbol,name,market
 ## HTML 每日觀察頁
 
 執行後會產生 `output/candidates.html`，包含摘要卡、嚴格符合名單、接近觀察名單，以及適合每日快速掃描的主要欄位。GitHub Actions 跑完後也會自動把這個 HTML 檔 commit 回 repo。
+
+GitHub Pages 會把 `output/candidates.html` 發布成 `index.html`，並把 CSV / Excel 放在網頁的 `downloads/` 路徑下，方便在任何裝置開啟或下載。
 
 ## 股票清單更新
 
