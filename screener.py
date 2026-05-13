@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 from io import StringIO
 import time
 from datetime import datetime, timedelta
@@ -737,6 +738,198 @@ def merge_result(technical_result: pd.DataFrame, institutional_summary: pd.DataF
     return classify_candidates(merged)
 
 
+def format_number(value: Any, digits: int = 2) -> str:
+    if pd.isna(value):
+        return ""
+    if isinstance(value, bool):
+        return "是" if value else "否"
+    if isinstance(value, int):
+        return f"{value:,}"
+    if isinstance(value, float):
+        return f"{value:,.{digits}f}"
+    return str(value)
+
+
+def build_html_table(data: pd.DataFrame, columns: list[str], max_rows: int | None = None) -> str:
+    if data.empty:
+        return '<div class="empty">目前沒有符合此分類的股票。</div>'
+
+    display = data.head(max_rows) if max_rows else data
+    header = "".join(f"<th>{html.escape(column)}</th>" for column in columns)
+    rows = []
+    for _, row in display.iterrows():
+        cells = []
+        for column in columns:
+            value = row.get(column, "")
+            class_name = ""
+            if column == "candidate_level":
+                class_name = f' class="level level-{html.escape(str(value))}"'
+            elif column in {"MACD_綠柱趨緩接近翻紅", "法人近 5 日是否合計買超", "投信近 5 日是否買超"}:
+                class_name = ' class="yes"' if value == "是" else ' class="no"'
+            cells.append(f"<td{class_name}>{html.escape(format_number(value))}</td>")
+        rows.append("<tr>" + "".join(cells) + "</tr>")
+    return f"<table><thead><tr>{header}</tr></thead><tbody>{''.join(rows)}</tbody></table>"
+
+
+def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
+    path = Path(config["html_output_path"])
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    updated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    strict = result[result["candidate_level"] == "符合"].copy() if not result.empty else result
+    watch = result[result["candidate_level"] == "接近"].copy() if not result.empty else result
+    top = result.head(30).copy() if not result.empty else result
+
+    columns = [
+        "candidate_level",
+        "candidate_score",
+        "股票代號",
+        "股票名稱",
+        "市場",
+        "收盤價",
+        "K 值",
+        "D 值",
+        "RSI",
+        "放量倍數",
+        "MACD_綠柱趨緩接近翻紅",
+        "三大法人近 5 日合計買賣超張數",
+        "投信近 5 日買賣超張數",
+        "最後更新日期",
+    ]
+
+    styles = """
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #60717d;
+      --line: #d7e0e5;
+      --bg: #f6f8f9;
+      --panel: #ffffff;
+      --accent: #0f766e;
+      --accent-soft: #e5f4f2;
+      --warn: #9a5b00;
+      --warn-soft: #fff4df;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    header {
+      padding: 28px 32px 18px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0; }
+    h2 { margin: 32px 0 12px; font-size: 20px; letter-spacing: 0; }
+    .subtitle { color: var(--muted); margin: 0; }
+    main { padding: 24px 32px 40px; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .label { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    .value { font-size: 28px; font-weight: 700; }
+    .table-wrap {
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table { border-collapse: collapse; width: 100%; min-width: 1120px; }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #edf3f5;
+      color: #33434d;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    td:nth-child(1), td:nth-child(3), td:nth-child(4), td:nth-child(5), th:nth-child(1), th:nth-child(3), th:nth-child(4), th:nth-child(5) {
+      text-align: left;
+    }
+    tr:hover { background: #f8fbfc; }
+    .level, .yes, .no {
+      font-weight: 700;
+    }
+    .level-符合, .yes {
+      color: var(--accent);
+    }
+    .level-接近 {
+      color: var(--warn);
+    }
+    .no {
+      color: var(--muted);
+    }
+    .empty {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      color: var(--muted);
+    }
+    .note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    """
+
+    document = f"""<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>台股低位轉強放量候選清單</title>
+  <style>{styles}</style>
+</head>
+<body>
+  <header>
+    <h1>台股低位轉強放量候選清單</h1>
+    <p class="subtitle">更新時間：{html.escape(updated_at)}。依 candidate_score、放量倍數與法人買超排序。</p>
+  </header>
+  <main>
+    <section class="cards">
+      <div class="card"><div class="label">總候選</div><div class="value">{len(result):,}</div></div>
+      <div class="card"><div class="label">嚴格符合</div><div class="value">{len(strict):,}</div></div>
+      <div class="card"><div class="label">接近觀察</div><div class="value">{len(watch):,}</div></div>
+      <div class="card"><div class="label">最高分</div><div class="value">{int(result['candidate_score'].max()) if not result.empty else 0}</div></div>
+    </section>
+
+    <h2>優先觀察 Top 30</h2>
+    <div class="table-wrap">{build_html_table(top, columns)}</div>
+
+    <h2>嚴格符合</h2>
+    <div class="table-wrap">{build_html_table(strict, columns)}</div>
+
+    <h2>接近觀察</h2>
+    <div class="table-wrap">{build_html_table(watch, columns, max_rows=120)}</div>
+
+    <p class="note">本頁為量化條件整理，不構成投資建議。MACD 僅為參考標註，不作為硬性篩選條件。</p>
+  </main>
+</body>
+</html>
+"""
+    path.write_text(document, encoding="utf-8")
+
+
 def export_result(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
     csv_path = Path(config["output_csv_path"])
     excel_path = Path(config["output_excel_path"])
@@ -749,6 +942,7 @@ def export_result(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None
     result.to_excel(excel_path, index=False)
     result[result["candidate_level"] == "符合"].to_excel(strict_path, index=False)
     result[result["candidate_level"] == "接近"].to_excel(watchlist_path, index=False)
+    export_html(result, config)
 
 
 def write_error_log(errors: list[dict[str, str]], config: dict[str, Any] = CONFIG) -> None:

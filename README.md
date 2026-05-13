@@ -75,6 +75,7 @@ symbol,name,market
 - [output/screening_result.xlsx](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/output/screening_result.xlsx)
 - [output/strict_candidates.xlsx](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/output/strict_candidates.xlsx)
 - [output/watchlist_candidates.xlsx](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/output/watchlist_candidates.xlsx)
+- [output/candidates.html](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/output/candidates.html)
 - [logs/error_log.csv](/Users/LinScoppen/Documents/VS%20Projects/CandyStock/logs/error_log.csv)
 
 單一股票抓不到股價資料時會略過並寫入錯誤紀錄。法人資料抓取失敗時，仍會輸出技術面篩選結果，法人欄位補 0。
@@ -108,6 +109,10 @@ symbol,name,market
 `candidate_level = 接近` 代表符合多數觀察條件：價格、較寬的 KD / RSI 區間、較低的放量門檻、MACD 綠柱縮短接近翻紅、或法人 / 投信近 5 日買超。門檻可在 `config.py` 的 `watch_*` 參數調整。
 
 `candidate_score` 滿分 100 分：KD 20、RSI 20、Volume_MA5 / Volume_MA20 20、Volume_MA5 / Volume_MA40 10、MACD 10、三大法人近 5 日買超 10、投信近 5 日買超 10。
+
+## HTML 每日觀察頁
+
+執行後會產生 `output/candidates.html`，包含摘要卡、嚴格符合名單、接近觀察名單，以及適合每日快速掃描的主要欄位。GitHub Actions 跑完後也會自動把這個 HTML 檔 commit 回 repo。
 
 ## 股票清單更新
 

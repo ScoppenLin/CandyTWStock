@@ -11,6 +11,7 @@ output/*
 !output/screening_result.xlsx
 !output/strict_candidates.xlsx
 !output/watchlist_candidates.xlsx
+!output/candidates.html
 logs/*
 !logs/.gitkeep
 !logs/error_log.csv

@@ -38,6 +38,7 @@ CONFIG = {
     "output_excel_path": "output/screening_result.xlsx",
     "strict_output_excel_path": "output/strict_candidates.xlsx",
     "watchlist_output_excel_path": "output/watchlist_candidates.xlsx",
+    "html_output_path": "output/candidates.html",
     "error_log_path": "logs/error_log.csv",
     "institutional_lookback_calendar_days": 45,
     "institutional_max_consecutive_failures": 3,
