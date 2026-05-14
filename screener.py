@@ -1213,13 +1213,13 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
       <div class="card"><div class="label">最高分</div><div class="value">{int(result['candidate_score'].max()) if not result.empty else 0}</div></div>
     </section>
 
-    <h2>優先觀察 Top 30</h2>
-    <div class="table-wrap">{build_html_table(top, columns)}</div>
-    {build_mobile_cards(top)}
-
     <h2>嚴格符合</h2>
     <div class="table-wrap">{build_html_table(strict, columns)}</div>
     {build_mobile_cards(strict)}
+
+    <h2>優先觀察 Top 30</h2>
+    <div class="table-wrap">{build_html_table(top, columns)}</div>
+    {build_mobile_cards(top)}
 
     <h2>接近觀察</h2>
     <div class="table-wrap">{build_html_table(watch, columns, max_rows=120)}</div>
