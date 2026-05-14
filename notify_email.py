@@ -17,6 +17,17 @@ def _env(name: str, default: str = "") -> str:
     return os.getenv(name, default).strip()
 
 
+def _env_int(name: str, default: int) -> int:
+    raw = _env(name)
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        print(f"Email notification skipped: {name} must be a number, got {raw!r}.")
+        return default
+
+
 def _split_recipients(raw: str) -> list[str]:
     return [item.strip() for item in raw.replace(";", ",").split(",") if item.strip()]
 
@@ -133,7 +144,7 @@ def _build_message(result_path: Path, site_url: str) -> tuple[str, str]:
 
 def main() -> int:
     smtp_host = _env("SMTP_HOST")
-    smtp_port = int(_env("SMTP_PORT", "587"))
+    smtp_port = _env_int("SMTP_PORT", 587)
     smtp_username = _env("SMTP_USERNAME")
     smtp_password = _env("SMTP_PASSWORD")
     smtp_from = _env("SMTP_FROM", smtp_username)
@@ -153,16 +164,20 @@ def main() -> int:
     message.set_content("請使用支援 HTML 的郵件用戶端查看今日台股候選清單。")
     message.add_alternative(html, subtype="html")
 
-    context = ssl.create_default_context()
-    if smtp_port == 465:
-        with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context, timeout=30) as smtp:
-            smtp.login(smtp_username, smtp_password)
-            smtp.send_message(message)
-    else:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as smtp:
-            smtp.starttls(context=context)
-            smtp.login(smtp_username, smtp_password)
-            smtp.send_message(message)
+    try:
+        context = ssl.create_default_context()
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context, timeout=30) as smtp:
+                smtp.login(smtp_username, smtp_password)
+                smtp.send_message(message)
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as smtp:
+                smtp.starttls(context=context)
+                smtp.login(smtp_username, smtp_password)
+                smtp.send_message(message)
+    except Exception as exc:
+        print(f"Email notification failed but screener output is kept: {exc}")
+        return 0
 
     print(f"Email notification sent to {', '.join(recipients)}.")
     return 0
