@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 from io import StringIO
 import time
 from datetime import datetime, timedelta
@@ -763,6 +764,21 @@ def format_html_cell(column: str, value: Any) -> str:
     return format_number(value)
 
 
+def stock_chart_url(symbol: Any, market: Any) -> str:
+    symbol_text = format_html_cell("股票代號", symbol)
+    suffix = "TW" if str(market) == "上市" else "TWO"
+    return f"https://tw.stock.yahoo.com/quote/{symbol_text}.{suffix}/technical-analysis"
+
+
+def stock_link(symbol: Any, market: Any, label: Any, class_name: str = "stock-link") -> str:
+    url = stock_chart_url(symbol, market)
+    label_text = format_html_cell("股票代號", label) if label == symbol else str(label)
+    return (
+        f'<a class="{html.escape(class_name)}" href="{html.escape(url)}" '
+        f'target="_blank" rel="noopener noreferrer">{html.escape(label_text)}</a>'
+    )
+
+
 def build_html_table(data: pd.DataFrame, columns: list[str], max_rows: int | None = None) -> str:
     if data.empty:
         return '<div class="empty">目前沒有符合此分類的股票。</div>'
@@ -779,7 +795,11 @@ def build_html_table(data: pd.DataFrame, columns: list[str], max_rows: int | Non
                 class_name = f' class="level level-{html.escape(str(value))}"'
             elif column in {"MACD_綠柱趨緩接近翻紅", "法人近 5 日是否合計買超", "投信近 5 日是否買超"}:
                 class_name = ' class="yes"' if value == "是" else ' class="no"'
-            cells.append(f"<td{class_name}>{html.escape(format_html_cell(column, value))}</td>")
+            if column in {"股票代號", "股票名稱"}:
+                cell_content = stock_link(row.get("股票代號", ""), row.get("市場", ""), value)
+            else:
+                cell_content = html.escape(format_html_cell(column, value))
+            cells.append(f"<td{class_name}>{cell_content}</td>")
         rows.append("<tr>" + "".join(cells) + "</tr>")
     return f"<table><thead><tr>{header}</tr></thead><tbody>{''.join(rows)}</tbody></table>"
 
@@ -801,7 +821,7 @@ def build_mobile_cards(data: pd.DataFrame, max_rows: int | None = None) -> str:
               <div class="stock-card-top">
                 <div>
                   <div class="stock-name">{html.escape(str(row.get("股票名稱", "")))}</div>
-                  <div class="stock-meta">{html.escape(format_html_cell("股票代號", row.get("股票代號", "")))} · {html.escape(str(row.get("市場", "")))}</div>
+                  <div class="stock-meta">{stock_link(row.get("股票代號", ""), row.get("市場", ""), row.get("股票代號", ""))} · {html.escape(str(row.get("市場", "")))}</div>
                 </div>
                 <div class="score">
                   <span>{html.escape(format_html_cell("candidate_score", row.get("candidate_score", "")))}</span>
@@ -912,6 +932,15 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
       text-decoration: none;
       font-size: 14px;
       font-weight: 700;
+    }
+    .stock-link {
+      color: inherit;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .stock-link:hover {
+      color: var(--accent);
+      text-decoration: underline;
     }
     .cards {
       display: grid;
@@ -1053,6 +1082,10 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
         font-size: 13px;
         margin-top: 3px;
       }
+      .stock-meta .stock-link {
+        color: var(--muted);
+        font-weight: 700;
+      }
       .score {
         min-width: 54px;
         text-align: right;
@@ -1191,6 +1224,58 @@ def export_result(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None
     export_html(result, config)
 
 
+def today_text() -> str:
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+def cache_meta_path(config: dict[str, Any] = CONFIG) -> Path:
+    return Path(config["result_cache_meta_path"])
+
+
+def write_result_cache_meta(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
+    path = cache_meta_path(config)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generated_date": today_text(),
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "rows": int(len(result)),
+        "source": "full_screener",
+    }
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def read_result_cache_meta(config: dict[str, Any] = CONFIG) -> dict[str, Any]:
+    path = cache_meta_path(config)
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+
+
+def read_cached_result(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    path = Path(config["output_csv_path"])
+    if not path.exists():
+        raise FileNotFoundError(f"找不到快取結果: {path}")
+    return pd.read_csv(path, dtype={"股票代號": str})
+
+
+def has_fresh_result_cache(config: dict[str, Any] = CONFIG) -> bool:
+    if not config.get("use_daily_result_cache", True):
+        return False
+    if not Path(config["output_csv_path"]).exists():
+        return False
+    meta = read_result_cache_meta(config)
+    return meta.get("generated_date") == today_text()
+
+
+def export_from_cached_result(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    result = read_cached_result(config)
+    export_result(result, config)
+    return result
+
+
 def write_error_log(errors: list[dict[str, str]], config: dict[str, Any] = CONFIG) -> None:
     path = Path(config["error_log_path"])
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1199,6 +1284,21 @@ def write_error_log(errors: list[dict[str, str]], config: dict[str, Any] = CONFI
 
 
 def run_screener(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
+    if has_fresh_result_cache(config):
+        result = export_from_cached_result(config)
+        write_error_log(
+            [
+                {
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "symbol": "ALL",
+                    "stage": "daily_cache",
+                    "reason": "使用今日快取結果，略過股票資料與法人資料抓取",
+                }
+            ],
+            config,
+        )
+        return result
+
     errors: list[dict[str, str]] = []
     stocks = load_stock_list(config, errors)
     technical_rows = build_technical_rows(stocks, config, errors)
@@ -1218,6 +1318,7 @@ def run_screener(config: dict[str, Any] = CONFIG) -> pd.DataFrame:
 
     result = merge_result(technical_result, institutional_summary)
     export_result(result, config)
+    write_result_cache_meta(result, config)
     write_error_log(errors, config)
     return result
 
@@ -1226,6 +1327,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="台股低位轉強放量選股器 MVP")
     parser.add_argument("--stock-list", help="覆寫股票清單 CSV 路徑")
     parser.add_argument("--require-close-above-ma20", action="store_true", help="啟用 Close > MA20 條件")
+    parser.add_argument("--refresh", action="store_true", help="忽略今日快取，強制重新抓股價與法人資料")
+    parser.add_argument("--html-only", action="store_true", help="只使用既有 output CSV 重新產生 HTML / Excel，不抓任何遠端資料")
     return parser.parse_args()
 
 
@@ -1236,11 +1339,18 @@ def main() -> None:
         config["stock_list_path"] = args.stock_list
     if args.require_close_above_ma20:
         config["require_close_above_ma20"] = True
+    if args.refresh:
+        config["use_daily_result_cache"] = False
 
-    result = run_screener(config)
-    print(f"完成篩選，共 {len(result)} 檔符合條件。")
+    if args.html_only:
+        result = export_from_cached_result(config)
+        print(f"已使用既有 CSV 重新產生 HTML / Excel，共 {len(result)} 檔。")
+    else:
+        result = run_screener(config)
+        print(f"完成篩選，共 {len(result)} 檔符合條件。")
     print(f"CSV: {config['output_csv_path']}")
     print(f"Excel: {config['output_excel_path']}")
+    print(f"HTML: {config['html_output_path']}")
     print(f"錯誤紀錄: {config['error_log_path']}")
 
 

@@ -32,6 +32,18 @@ python3 screener.py --stock-list data/stock_list.csv
 python3 screener.py --require-close-above-ma20
 ```
 
+若只是調整 HTML 版型，不想重新抓所有股票資料：
+
+```bash
+python3 screener.py --html-only
+```
+
+程式預設會使用「今日快取」。如果今天已經完整跑過一次，後續再次執行會直接使用既有 `output/screening_result.csv` 重建 CSV / Excel / HTML，不會重新抓 yfinance 與法人資料。若要強制重新抓資料：
+
+```bash
+python3 screener.py --refresh
+```
+
 ## 在 GitHub Actions 執行
 
 到 GitHub repo 的 `Actions` 頁面，選擇 `Run Taiwan Stock Screener`，按 `Run workflow`。
@@ -137,6 +149,10 @@ symbol,name,market
 執行後會產生 `output/candidates.html`，包含摘要卡、嚴格符合名單、接近觀察名單，以及適合每日快速掃描的主要欄位。GitHub Actions 跑完後也會自動把這個 HTML 檔 commit 回 repo。
 
 GitHub Actions 會把 `output/candidates.html` 發布到 `gh-pages` 分支成為 `index.html`，並把 CSV / Excel 放在網頁的 `downloads/` 路徑下，方便在任何裝置開啟或下載。
+
+股票代號與股票名稱會連到 Yahoo 股市技術分析頁，方便直接查看 K 線與技術指標。
+
+若只調整 HTML 樣式，可以使用 `python3 screener.py --html-only`，會直接讀取既有篩選結果重建網頁，避免重新下載全部股票資料。
 
 ## 股票清單更新
 

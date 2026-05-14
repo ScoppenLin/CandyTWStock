@@ -116,7 +116,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f output/screening_result.csv output/screening_result.xlsx output/strict_candidates.xlsx output/watchlist_candidates.xlsx output/candidates.html logs/error_log.csv data/stock_list.csv
+          git add -f output/screening_result.csv output/screening_result.xlsx output/strict_candidates.xlsx output/watchlist_candidates.xlsx output/candidates.html output/cache_meta.json logs/error_log.csv data/stock_list.csv
           if git diff --cached --quiet; then
             echo "No output changes to commit."
           else
