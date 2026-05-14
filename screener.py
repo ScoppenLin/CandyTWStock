@@ -750,6 +750,19 @@ def format_number(value: Any, digits: int = 2) -> str:
     return str(value)
 
 
+def format_html_cell(column: str, value: Any) -> str:
+    if column == "股票代號":
+        if pd.isna(value):
+            return ""
+        text = str(value).strip()
+        if text.endswith(".0"):
+            text = text[:-2]
+        return text.zfill(4) if text.isdigit() and len(text) <= 4 else text
+    if column == "candidate_score":
+        return format_number(value, digits=0)
+    return format_number(value)
+
+
 def build_html_table(data: pd.DataFrame, columns: list[str], max_rows: int | None = None) -> str:
     if data.empty:
         return '<div class="empty">目前沒有符合此分類的股票。</div>'
@@ -766,9 +779,53 @@ def build_html_table(data: pd.DataFrame, columns: list[str], max_rows: int | Non
                 class_name = f' class="level level-{html.escape(str(value))}"'
             elif column in {"MACD_綠柱趨緩接近翻紅", "法人近 5 日是否合計買超", "投信近 5 日是否買超"}:
                 class_name = ' class="yes"' if value == "是" else ' class="no"'
-            cells.append(f"<td{class_name}>{html.escape(format_number(value))}</td>")
+            cells.append(f"<td{class_name}>{html.escape(format_html_cell(column, value))}</td>")
         rows.append("<tr>" + "".join(cells) + "</tr>")
     return f"<table><thead><tr>{header}</tr></thead><tbody>{''.join(rows)}</tbody></table>"
+
+
+def build_mobile_cards(data: pd.DataFrame, max_rows: int | None = None) -> str:
+    if data.empty:
+        return '<div class="empty">目前沒有符合此分類的股票。</div>'
+
+    display = data.head(max_rows) if max_rows else data
+    cards = []
+    for _, row in display.iterrows():
+        level = str(row.get("candidate_level", ""))
+        macd = str(row.get("MACD_綠柱趨緩接近翻紅", ""))
+        inst_5d = row.get("三大法人近 5 日合計買賣超張數", 0)
+        trust_5d = row.get("投信近 5 日買賣超張數", 0)
+        cards.append(
+            f"""
+            <article class="stock-card">
+              <div class="stock-card-top">
+                <div>
+                  <div class="stock-name">{html.escape(str(row.get("股票名稱", "")))}</div>
+                  <div class="stock-meta">{html.escape(format_html_cell("股票代號", row.get("股票代號", "")))} · {html.escape(str(row.get("市場", "")))}</div>
+                </div>
+                <div class="score">
+                  <span>{html.escape(format_html_cell("candidate_score", row.get("candidate_score", "")))}</span>
+                  <small>分</small>
+                </div>
+              </div>
+              <div class="badges">
+                <span class="badge badge-{html.escape(level)}">{html.escape(level)}</span>
+                <span class="badge {'badge-yes' if macd == '是' else 'badge-no'}">MACD {html.escape(macd)}</span>
+              </div>
+              <div class="metrics">
+                <div><span>收盤</span><strong>{html.escape(format_number(row.get("收盤價", "")))}</strong></div>
+                <div><span>RSI</span><strong>{html.escape(format_number(row.get("RSI", "")))}</strong></div>
+                <div><span>K / D</span><strong>{html.escape(format_number(row.get("K 值", "")))} / {html.escape(format_number(row.get("D 值", "")))}</strong></div>
+                <div><span>放量</span><strong>{html.escape(format_number(row.get("放量倍數", "")))}x</strong></div>
+                <div><span>法人 5 日</span><strong>{html.escape(format_number(inst_5d))}</strong></div>
+                <div><span>投信 5 日</span><strong>{html.escape(format_number(trust_5d))}</strong></div>
+              </div>
+              <div class="updated">更新：{html.escape(str(row.get("最後更新日期", "")))}</div>
+            </article>
+            """
+        )
+
+    return '<div class="mobile-cards">' + "".join(cards) + "</div>"
 
 
 def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
@@ -796,6 +853,14 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
         "投信近 5 日買賣超張數",
         "最後更新日期",
     ]
+    downloads = """
+    <nav class="downloads" aria-label="下載完整資料">
+      <a href="downloads/screening_result.csv">CSV</a>
+      <a href="downloads/screening_result.xlsx">完整 Excel</a>
+      <a href="downloads/strict_candidates.xlsx">嚴格符合</a>
+      <a href="downloads/watchlist_candidates.xlsx">接近觀察</a>
+    </nav>
+    """
 
     styles = """
     :root {
@@ -809,8 +874,11 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
       --accent-soft: #e5f4f2;
       --warn: #9a5b00;
       --warn-soft: #fff4df;
+      --danger: #b42318;
+      --shadow: 0 8px 24px rgba(31, 41, 55, 0.08);
     }
     * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -826,6 +894,25 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
     h2 { margin: 32px 0 12px; font-size: 20px; letter-spacing: 0; }
     .subtitle { color: var(--muted); margin: 0; }
     main { padding: 24px 32px 40px; }
+    .downloads {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .downloads a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: var(--panel);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+    }
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -839,6 +926,7 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
     }
     .label { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
     .value { font-size: 28px; font-weight: 700; }
+    .mobile-cards { display: none; }
     .table-wrap {
       overflow: auto;
       background: var(--panel);
@@ -890,6 +978,160 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
       font-size: 13px;
       line-height: 1.5;
     }
+    @media (max-width: 720px) {
+      body { background: #f2f5f6; }
+      header {
+        padding: 18px 16px 14px;
+      }
+      h1 {
+        font-size: 22px;
+        line-height: 1.25;
+      }
+      h2 {
+        margin: 24px 0 10px;
+        font-size: 18px;
+      }
+      .subtitle {
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      main {
+        padding: 14px 12px 28px;
+      }
+      .downloads {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .downloads a {
+        justify-content: center;
+        min-height: 40px;
+        padding: 9px 8px;
+        font-size: 13px;
+      }
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .card {
+        padding: 12px;
+        border-radius: 8px;
+      }
+      .label {
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+      .value {
+        font-size: 22px;
+      }
+      .table-wrap {
+        display: none;
+      }
+      .mobile-cards {
+        display: grid;
+        gap: 10px;
+      }
+      .stock-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: var(--shadow);
+      }
+      .stock-card-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .stock-name {
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+      .stock-meta {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 3px;
+      }
+      .score {
+        min-width: 54px;
+        text-align: right;
+        color: var(--accent);
+      }
+      .score span {
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .score small {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 12px 0;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        background: #edf3f5;
+        color: var(--muted);
+      }
+      .badge-符合,
+      .badge-yes {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .badge-接近 {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      .badge-no {
+        background: #eef2f4;
+        color: var(--muted);
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-left: 1px solid var(--line);
+      }
+      .metrics div {
+        min-width: 0;
+        padding: 9px 8px;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .metrics span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 2px;
+      }
+      .metrics strong {
+        display: block;
+        overflow-wrap: anywhere;
+        font-size: 15px;
+        line-height: 1.25;
+      }
+      .updated {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .note {
+        font-size: 12px;
+      }
+    }
     """
 
     document = f"""<!doctype html>
@@ -904,6 +1146,7 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
   <header>
     <h1>台股低位轉強放量候選清單</h1>
     <p class="subtitle">更新時間：{html.escape(updated_at)}。依 candidate_score、放量倍數與法人買超排序。</p>
+    {downloads}
   </header>
   <main>
     <section class="cards">
@@ -915,12 +1158,15 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
 
     <h2>優先觀察 Top 30</h2>
     <div class="table-wrap">{build_html_table(top, columns)}</div>
+    {build_mobile_cards(top)}
 
     <h2>嚴格符合</h2>
     <div class="table-wrap">{build_html_table(strict, columns)}</div>
+    {build_mobile_cards(strict)}
 
     <h2>接近觀察</h2>
     <div class="table-wrap">{build_html_table(watch, columns, max_rows=120)}</div>
+    {build_mobile_cards(watch, max_rows=120)}
 
     <p class="note">本頁為量化條件整理，不構成投資建議。MACD 僅為參考標註，不作為硬性篩選條件。</p>
   </main>
