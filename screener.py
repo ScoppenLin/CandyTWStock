@@ -815,33 +815,36 @@ def build_mobile_cards(data: pd.DataFrame, max_rows: int | None = None) -> str:
         macd = str(row.get("MACD_綠柱趨緩接近翻紅", ""))
         inst_5d = row.get("三大法人近 5 日合計買賣超張數", 0)
         trust_5d = row.get("投信近 5 日買賣超張數", 0)
+        url = stock_chart_url(row.get("股票代號", ""), row.get("市場", ""))
         cards.append(
             f"""
-            <article class="stock-card">
-              <div class="stock-card-top">
-                <div>
-                  <div class="stock-name">{html.escape(str(row.get("股票名稱", "")))}</div>
-                  <div class="stock-meta">{stock_link(row.get("股票代號", ""), row.get("市場", ""), row.get("股票代號", ""))} · {html.escape(str(row.get("市場", "")))}</div>
+            <a class="stock-card-link" href="{html.escape(url)}" target="_blank" rel="noopener noreferrer" aria-label="開啟 {html.escape(str(row.get("股票名稱", "")))} 技術分析">
+              <article class="stock-card">
+                <div class="stock-card-top">
+                  <div>
+                    <div class="stock-name">{html.escape(str(row.get("股票名稱", "")))}</div>
+                    <div class="stock-meta">{html.escape(format_html_cell("股票代號", row.get("股票代號", "")))} · {html.escape(str(row.get("市場", "")))} · Yahoo 技術分析</div>
+                  </div>
+                  <div class="score">
+                    <span>{html.escape(format_html_cell("candidate_score", row.get("candidate_score", "")))}</span>
+                    <small>分</small>
+                  </div>
                 </div>
-                <div class="score">
-                  <span>{html.escape(format_html_cell("candidate_score", row.get("candidate_score", "")))}</span>
-                  <small>分</small>
+                <div class="badges">
+                  <span class="badge badge-{html.escape(level)}">{html.escape(level)}</span>
+                  <span class="badge {'badge-yes' if macd == '是' else 'badge-no'}">MACD {html.escape(macd)}</span>
                 </div>
-              </div>
-              <div class="badges">
-                <span class="badge badge-{html.escape(level)}">{html.escape(level)}</span>
-                <span class="badge {'badge-yes' if macd == '是' else 'badge-no'}">MACD {html.escape(macd)}</span>
-              </div>
-              <div class="metrics">
-                <div><span>收盤</span><strong>{html.escape(format_number(row.get("收盤價", "")))}</strong></div>
-                <div><span>RSI</span><strong>{html.escape(format_number(row.get("RSI", "")))}</strong></div>
-                <div><span>K / D</span><strong>{html.escape(format_number(row.get("K 值", "")))} / {html.escape(format_number(row.get("D 值", "")))}</strong></div>
-                <div><span>放量</span><strong>{html.escape(format_number(row.get("放量倍數", "")))}x</strong></div>
-                <div><span>法人 5 日</span><strong>{html.escape(format_number(inst_5d))}</strong></div>
-                <div><span>投信 5 日</span><strong>{html.escape(format_number(trust_5d))}</strong></div>
-              </div>
-              <div class="updated">更新：{html.escape(str(row.get("最後更新日期", "")))}</div>
-            </article>
+                <div class="metrics">
+                  <div><span>收盤</span><strong>{html.escape(format_number(row.get("收盤價", "")))}</strong></div>
+                  <div><span>RSI</span><strong>{html.escape(format_number(row.get("RSI", "")))}</strong></div>
+                  <div><span>K / D</span><strong>{html.escape(format_number(row.get("K 值", "")))} / {html.escape(format_number(row.get("D 值", "")))}</strong></div>
+                  <div><span>放量</span><strong>{html.escape(format_number(row.get("放量倍數", "")))}x</strong></div>
+                  <div><span>法人 5 日</span><strong>{html.escape(format_number(inst_5d))}</strong></div>
+                  <div><span>投信 5 日</span><strong>{html.escape(format_number(trust_5d))}</strong></div>
+                </div>
+                <div class="updated">更新：{html.escape(str(row.get("最後更新日期", "")))} · 點卡片看 K 線</div>
+              </article>
+            </a>
             """
         )
 
@@ -934,13 +937,24 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
       font-weight: 700;
     }
     .stock-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      border-radius: 8px;
       color: inherit;
       text-decoration: none;
       font-weight: 700;
     }
+    .stock-link:focus-visible,
+    .stock-card-link:focus-visible {
+      outline: 3px solid rgba(15, 118, 110, 0.32);
+      outline-offset: 3px;
+    }
     .stock-link:hover {
+      background: var(--accent-soft);
       color: var(--accent);
-      text-decoration: underline;
     }
     .cards {
       display: grid;
@@ -1059,12 +1073,25 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
         display: grid;
         gap: 10px;
       }
+      .stock-card-link {
+        display: block;
+        color: inherit;
+        text-decoration: none;
+        border-radius: 8px;
+        -webkit-tap-highlight-color: rgba(15, 118, 110, 0.16);
+      }
+      .stock-card-link:active .stock-card {
+        transform: scale(0.99);
+        border-color: rgba(15, 118, 110, 0.42);
+        background: #fbfefd;
+      }
       .stock-card {
         background: var(--panel);
         border: 1px solid var(--line);
         border-radius: 8px;
         padding: 14px;
         box-shadow: var(--shadow);
+        transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
       }
       .stock-card-top {
         display: flex;
@@ -1076,15 +1103,12 @@ def export_html(result: pd.DataFrame, config: dict[str, Any] = CONFIG) -> None:
         font-size: 19px;
         font-weight: 800;
         line-height: 1.25;
+        color: var(--ink);
       }
       .stock-meta {
         color: var(--muted);
         font-size: 13px;
         margin-top: 3px;
-      }
-      .stock-meta .stock-link {
-        color: var(--muted);
-        font-weight: 700;
       }
       .score {
         min-width: 54px;
