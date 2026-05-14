@@ -1,14 +1,2 @@
 ﻿timestamp,symbol,stage,reason
-2026-05-14 01:43:06,2072,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-14 01:43:29,4169,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-14 01:43:29,4195,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-14 01:43:40,6908,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-14 01:43:44,7821,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-14 01:44:21,7716,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-14 01:45:58,上櫃,fetch_institutional_data,2026-05-10: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F10&type=Daily&response=json
-2026-05-14 01:46:09,上櫃,fetch_institutional_data,2026-05-04: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F04&type=Daily&response=json
-2026-05-14 01:46:26,上櫃,fetch_institutional_data,2026-04-21: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F04%2F21&type=Daily&response=json
-2026-05-14 01:46:30,上櫃,fetch_institutional_data,2026-04-20: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F04%2F20&type=Daily&response=json
-2026-05-14 01:46:41,上櫃,fetch_institutional_data,2026-04-13: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F04%2F13&type=Daily&response=json
-2026-05-14 01:46:46,上櫃,fetch_institutional_data,2026-04-11: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F04%2F11&type=Daily&response=json
-2026-05-14 01:46:52,上櫃,fetch_institutional_data,2026-04-09: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F04%2F09&type=Daily&response=json
+2026-05-14 01:47:40,ALL,daily_cache,使用今日快取結果，略過股票資料與法人資料抓取
