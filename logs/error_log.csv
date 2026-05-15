@@ -1,2 +1,7 @@
 ﻿timestamp,symbol,stage,reason
-2026-05-14 11:55:43,ALL,daily_cache,使用今日快取結果，略過股票資料與法人資料抓取
+2026-05-15 11:59:45,2072,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-15 12:00:21,4169,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-15 12:00:21,4195,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-15 12:00:40,6908,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-15 12:00:47,7821,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-15 12:01:43,7716,technical_screening,股價資料筆數不足，無法計算指標
