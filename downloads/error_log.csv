@@ -1,11 +1,8 @@
 ﻿timestamp,symbol,stage,reason
-2026-05-18 13:51:59,2072,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-18 13:52:25,4169,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-18 13:52:25,4195,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-18 13:52:36,6908,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-18 13:52:40,7821,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-18 13:53:17,7716,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-18 13:53:39,上市,fetch_institutional_data,"2026-05-12: 16 columns passed, passed data had 19 columns"
-2026-05-18 13:54:57,上櫃,fetch_institutional_data,2026-05-10: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F10&type=Daily&response=json
-2026-05-18 13:55:13,上櫃,fetch_institutional_data,2026-05-06: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F06&type=Daily&response=json
-2026-05-18 13:55:20,上櫃,fetch_institutional_data,2026-05-04: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F04&type=Daily&response=json
+2026-05-19 12:45:16,2072,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-19 12:46:00,4169,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-19 12:46:00,4195,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-19 12:46:21,6908,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-19 12:46:27,7818,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-19 12:46:27,7821,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-19 12:47:38,7716,technical_screening,股價資料筆數不足，無法計算指標
