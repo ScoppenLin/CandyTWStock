@@ -1,9 +1,7 @@
 ﻿timestamp,symbol,stage,reason
-2026-05-20 12:29:09,2072,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-20 12:29:56,4169,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-20 12:29:56,4195,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-20 12:30:26,7803,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-20 12:30:26,7818,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-20 12:30:26,7821,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-20 12:31:43,7716,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-20 12:34:15,上櫃,fetch_institutional_data,"2026-04-29: HTTPSConnectionPool(host='www.tpex.org.tw', port=443): Read timed out. (read timeout=15)"
+2026-05-21 12:49:41,4169,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-21 12:49:41,4195,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-21 12:50:18,7803,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-21 12:50:18,7818,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-21 12:50:18,7821,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-21 12:52:01,7716,technical_screening,股價資料筆數不足，無法計算指標
