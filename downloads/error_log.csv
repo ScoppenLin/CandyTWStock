@@ -1,14 +1,8 @@
 ﻿timestamp,symbol,stage,reason
-2026-05-25 13:33:06,4169,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-25 13:33:06,4195,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-25 13:33:06,4582,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-25 13:33:20,7803,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-25 13:33:20,7818,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-25 13:33:20,7821,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-25 13:33:57,7716,technical_screening,股價資料筆數不足，無法計算指標
-2026-05-25 13:35:24,上櫃,fetch_institutional_data,2026-05-24: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F24&type=Daily&response=json
-2026-05-25 13:35:36,上櫃,fetch_institutional_data,2026-05-18: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F18&type=Daily&response=json
-2026-05-25 13:35:42,上櫃,fetch_institutional_data,2026-05-14: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F14&type=Daily&response=json
-2026-05-25 13:35:48,上櫃,fetch_institutional_data,2026-05-12: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F12&type=Daily&response=json
-2026-05-25 13:36:01,上櫃,fetch_institutional_data,2026-05-05: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F05%2F05&type=Daily&response=json
-2026-05-25 13:36:13,上櫃,fetch_institutional_data,2026-04-27: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F04%2F27&type=Daily&response=json
+2026-05-27 12:57:06,4169,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-27 12:57:06,4195,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-27 12:57:06,4582,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-27 12:57:35,7803,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-27 12:57:35,7818,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-27 12:57:35,7821,technical_screening,股價資料筆數不足，無法計算指標
+2026-05-27 12:58:45,7716,technical_screening,股價資料筆數不足，無法計算指標
