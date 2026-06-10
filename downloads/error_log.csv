@@ -1,3 +1,2 @@
 ﻿timestamp,symbol,stage,reason
-2026-06-09 12:43:15,7803,technical_screening,股價資料筆數不足，無法計算指標
-2026-06-09 12:46:24,上櫃,fetch_institutional_data,"2026-05-18: HTTPSConnectionPool(host='www.tpex.org.tw', port=443): Read timed out. (read timeout=15)"
+2026-06-10 13:37:02,7803,technical_screening,股價資料筆數不足，無法計算指標
