@@ -1,6 +1,4 @@
 ﻿timestamp,symbol,stage,reason
-2026-07-15 11:39:56,7803,technical_screening,股價資料筆數不足，無法計算指標
-2026-07-15 11:41:02,6210,technical_screening,股價資料筆數不足，無法計算指標
-2026-07-15 11:41:02,6423,technical_screening,股價資料筆數不足，無法計算指標
-2026-07-15 11:43:24,上櫃,fetch_institutional_data,2026-06-28: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F06%2F28&type=Daily&response=json
-2026-07-15 11:43:35,上櫃,fetch_institutional_data,2026-06-22: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F06%2F22&type=Daily&response=json
+2026-07-16 11:44:28,5236,technical_screening,股價資料筆數不足，無法計算指標
+2026-07-16 11:44:42,7803,technical_screening,股價資料筆數不足，無法計算指標
+2026-07-16 11:46:12,上市,fetch_institutional_data,"2026-06-30: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
