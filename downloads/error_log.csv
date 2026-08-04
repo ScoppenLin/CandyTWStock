@@ -1,3 +1,5 @@
 ﻿timestamp,symbol,stage,reason
-2026-08-03 12:57:39,7835,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-03 12:58:30,7794,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-04 12:04:28,7835,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-04 12:05:17,7794,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-04 12:06:23,上櫃,fetch_institutional_data,2026-07-26: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F07%2F26&type=Daily&response=json
+2026-08-04 12:06:44,上櫃,fetch_institutional_data,2026-07-09: 520 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F07%2F09&type=Daily&response=json
