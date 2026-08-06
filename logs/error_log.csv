@@ -1,3 +1,4 @@
 ﻿timestamp,symbol,stage,reason
-2026-08-05 12:02:44,7835,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-05 12:03:38,7794,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-06 12:05:13,ALL,load_stock_list,"官方股票清單抓取失敗，改用本機 CSV: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
+2026-08-06 12:06:30,7835,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-06 12:07:42,7794,technical_screening,股價資料筆數不足，無法計算指標
