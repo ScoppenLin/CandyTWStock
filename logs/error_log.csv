@@ -1,9 +1,7 @@
 ﻿timestamp,symbol,stage,reason
-2026-08-12 11:03:46,2237,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-12 11:04:23,7835,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-12 11:05:09,7772,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-12 11:05:09,7794,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-12 11:06:08,上櫃,fetch_institutional_data,"2026-08-12: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
-2026-08-12 11:06:08,上櫃,fetch_institutional_data,2026-08-11: 403 Client Error: Forbidden for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F08%2F11&type=Daily&response=json
-2026-08-12 11:06:08,上櫃,fetch_institutional_data,2026-08-10: 403 Client Error: Forbidden for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F08%2F10&type=Daily&response=json
-2026-08-12 11:06:08,上櫃,fetch_institutional_data,連續抓取失敗，停止此市場法人資料抓取
+2026-08-13 11:03:43,2237,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-13 11:04:17,7835,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-13 11:04:17,7855,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-13 11:04:55,6907,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-13 11:04:58,7772,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-13 11:04:58,7794,technical_screening,股價資料筆數不足，無法計算指標
