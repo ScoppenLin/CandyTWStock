@@ -1,20 +1,15 @@
 ﻿timestamp,symbol,stage,reason
-2026-08-18 10:34:30,7835,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-18 10:34:30,7855,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-18 10:35:42,6907,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-18 10:35:42,6913,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-18 10:35:49,7772,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-18 10:35:49,7794,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-18 10:36:33,上市,fetch_institutional_data,"2026-08-11: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:37:24,上市,fetch_institutional_data,"2026-08-06: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:37:40,上市,fetch_institutional_data,"2026-08-05: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:38:12,上市,fetch_institutional_data,"2026-08-03: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:38:31,上市,fetch_institutional_data,"2026-07-31: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:39:30,上市,fetch_institutional_data,"2026-07-27: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:39:59,上市,fetch_institutional_data,"2026-07-23: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:40:30,上市,fetch_institutional_data,"2026-07-21: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:40:45,上市,fetch_institutional_data,"2026-07-20: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:41:03,上市,fetch_institutional_data,"2026-07-17: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:41:19,上市,fetch_institutional_data,"2026-07-16: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:41:35,上市,fetch_institutional_data,"2026-07-15: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-18 10:41:35,上市,fetch_institutional_data,連續抓取失敗，停止此市場法人資料抓取
+2026-08-19 10:34:07,7835,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-19 10:34:07,7855,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-19 10:35:06,6907,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-19 10:35:06,6913,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-19 10:35:12,7772,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-19 10:35:12,7794,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-19 10:35:37,上市,fetch_institutional_data,"2026-08-15: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
+2026-08-19 10:36:04,上市,fetch_institutional_data,"2026-08-05: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
+2026-08-19 10:36:24,上市,fetch_institutional_data,"2026-07-31: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
+2026-08-19 10:36:44,上市,fetch_institutional_data,"2026-07-27: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
+2026-08-19 10:37:01,上市,fetch_institutional_data,"2026-07-25: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
+2026-08-19 10:37:16,上市,fetch_institutional_data,"2026-07-24: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
+2026-08-19 10:37:32,上市,fetch_institutional_data,"2026-07-23: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
+2026-08-19 10:37:32,上市,fetch_institutional_data,連續抓取失敗，停止此市場法人資料抓取
