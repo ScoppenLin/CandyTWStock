@@ -1,17 +1,7 @@
 ﻿timestamp,symbol,stage,reason
-2026-08-20 10:35:12,1339,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-20 10:36:27,7835,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-20 10:36:27,7855,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-20 10:37:23,6907,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-20 10:37:23,6913,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-20 10:37:28,7772,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-20 10:37:28,7794,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-20 10:37:52,上市,fetch_institutional_data,"2026-08-18: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-20 10:38:51,上市,fetch_institutional_data,"2026-07-29: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-20 10:39:06,上市,fetch_institutional_data,"2026-07-28: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-20 10:39:50,上市,fetch_institutional_data,"2026-07-23: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-20 10:40:09,上市,fetch_institutional_data,"2026-07-20: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-20 10:40:50,上市,fetch_institutional_data,"2026-07-17: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-20 10:41:06,上市,fetch_institutional_data,"2026-07-16: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-20 10:41:22,上市,fetch_institutional_data,"2026-07-15: HTTPSConnectionPool(host='www.twse.com.tw', port=443): Read timed out. (read timeout=15)"
-2026-08-20 10:41:22,上市,fetch_institutional_data,連續抓取失敗，停止此市場法人資料抓取
+2026-08-21 10:35:14,7835,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-21 10:35:14,7855,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-21 10:35:53,6907,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-21 10:35:53,6913,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-21 10:35:57,7772,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-21 10:35:57,7794,technical_screening,股價資料筆數不足，無法計算指標
