@@ -1,3 +1,4 @@
 ﻿timestamp,symbol,stage,reason
-2026-08-28 21:09:40,7835,technical_screening,股價資料筆數不足，無法計算指標
-2026-08-28 21:10:39,7794,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-31 17:29:46,ALL,load_stock_list,"官方股票清單抓取失敗，改用本機 CSV: HTTPSConnectionPool(host='isin.twse.com.tw', port=443): Max retries exceeded with url: /isin/C_public.jsp?strMode=4 (Caused by ConnectTimeoutError(<HTTPSConnection(host='isin.twse.com.tw', port=443) at 0x7f4d981a2bd0>, 'Connection to isin.twse.com.tw timed out. (connect timeout=15)'))"
+2026-08-31 17:31:41,7835,technical_screening,股價資料筆數不足，無法計算指標
+2026-08-31 17:33:03,7794,technical_screening,股價資料筆數不足，無法計算指標
