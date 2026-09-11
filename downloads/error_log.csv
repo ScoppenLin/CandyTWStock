@@ -1,5 +1,7 @@
 ﻿timestamp,symbol,stage,reason
-2026-09-10 14:11:12,7835,technical_screening,股價資料筆數不足，無法計算指標
-2026-09-10 14:11:12,7855,technical_screening,股價資料筆數不足，無法計算指標
-2026-09-10 14:11:37,3718,technical_screening,股價資料筆數不足，無法計算指標
-2026-09-10 14:12:19,7794,technical_screening,股價資料筆數不足，無法計算指標
+2026-09-11 14:10:08,7835,technical_screening,股價資料筆數不足，無法計算指標
+2026-09-11 14:10:08,7855,technical_screening,股價資料筆數不足，無法計算指標
+2026-09-11 14:10:30,3718,technical_screening,股價資料筆數不足，無法計算指標
+2026-09-11 14:11:18,7794,technical_screening,股價資料筆數不足，無法計算指標
+2026-09-11 14:12:41,上櫃,fetch_institutional_data,"2026-08-30: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
+2026-09-11 14:13:08,上櫃,fetch_institutional_data,"2026-08-22: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))"
