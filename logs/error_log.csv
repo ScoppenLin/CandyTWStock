@@ -1,6 +1,6 @@
 ﻿timestamp,symbol,stage,reason
-2026-10-27 15:48:58,8908,technical_screening,股價資料筆數不足，無法計算指標
-2026-10-27 15:49:15,3718,technical_screening,股價資料筆數不足，無法計算指標
-2026-10-27 15:49:56,7856,technical_screening,股價資料筆數不足，無法計算指標
-2026-10-27 15:51:35,上櫃,fetch_institutional_data,2026-10-20: 525 Server Error: <none> for url: https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?date=115%2F10%2F20&type=Daily&response=json
-2026-10-27 15:52:18,上櫃,fetch_institutional_data,"2026-10-06: HTTPSConnectionPool(host='www.tpex.org.tw', port=443): Read timed out. (read timeout=15)"
+2026-10-28 16:31:11,7710,technical_screening,股價資料筆數不足，無法計算指標
+2026-10-28 16:31:17,8908,technical_screening,股價資料筆數不足，無法計算指標
+2026-10-28 16:31:34,3718,technical_screening,股價資料筆數不足，無法計算指標
+2026-10-28 16:32:14,7856,technical_screening,股價資料筆數不足，無法計算指標
+2026-10-28 16:34:27,上櫃,fetch_institutional_data,"2026-10-10: HTTPSConnectionPool(host='www.tpex.org.tw', port=443): Read timed out. (read timeout=15)"
